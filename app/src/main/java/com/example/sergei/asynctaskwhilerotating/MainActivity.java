@@ -24,12 +24,32 @@ public class MainActivity extends AppCompatActivity {
 
         tv = (TextView)findViewById(R.id.tv);
 
-        mt = new MyTask();
+        mt = (MyTask)getLastCustomNonConfigurationInstance();
+        if(mt == null) {
+            mt = new MyTask();
+            mt.execute();
+        }
+        mt.link(this);
         Log.d("qwe", "create MyTask: " + mt.hashCode());
-        mt.execute();
     }
 
-    class MyTask extends AsyncTask<String, Integer, Void>{
+    @Override
+    public Object onRetainCustomNonConfigurationInstance() {
+        mt.unLink();
+        return mt;
+    }
+
+    static class MyTask extends AsyncTask<String, Integer, Void>{
+
+        MainActivity activity;
+
+        void link(MainActivity act){
+            activity = act;
+        }
+
+        void unLink(){
+            activity = null;
+        }
 
         @Override
         protected Void doInBackground(String... params) {
@@ -38,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
                     TimeUnit.SECONDS.sleep(1);
                     publishProgress(i);
                     Log.d("qwe", "i = " + i + ", MyTask: " + this.hashCode()
-                    + ", MainActivity: " + MainActivity.this.hashCode());
+                    + ", MainActivity: " + activity.hashCode());
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -46,10 +66,12 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
 
+
+
         @Override
         protected void onProgressUpdate(Integer... values) {
             super.onProgressUpdate(values);
-            tv.setText("i = " + values[0]);
+            activity.tv.setText("i = " + values[0]);
 
         }
     }
